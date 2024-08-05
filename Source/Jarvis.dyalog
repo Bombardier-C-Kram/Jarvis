@@ -326,7 +326,7 @@
           :Else
               :If 1<|≡HTMLInterface ⍝ is it '' 'function'?
                   t←2⊃HTMLInterface
-                  :If 1 1 0≡⊃CodeLocation.⎕AT t
+                  :If 1 1 0≡CodeLocation Attributes t
                       _htmlRootFn←t
                       _htmlEnabled←1
                   :Else
@@ -639,7 +639,7 @@
       →0 If rc←8×~0∊⍴msg
      
       :If ~0∊⍴AppInitFn  ⍝ initialization function specified?
-          :Select ⊃CodeLocation.⎕AT AppInitFn
+          :Select CodeLocation Attributes AppInitFn
           :Case 1 0 0 ⍝ result-returning niladic?
               stopIf DebugLevel 2
               res←CodeLocation⍎AppInitFn        ⍝ run it
@@ -656,14 +656,14 @@
      
      
       :If ~0∊⍴AppCloseFn ⍝ application close function specified?
-          :If 1 0 0≢⊃CodeLocation.⎕AT AppCloseFn ⍝ result-returning niladic?
+          :If 1 0 0≢CodeLocation Attributes AppCloseFn ⍝ result-returning niladic?
               →0⊣(rc msg)←8('"',(⍕CodeLocation),'.',AppCloseFn,'" is not a niladic result-returning function')
           :EndIf
       :EndIf
      
       Validate←{0} ⍝ dummy validation function
       :If ~0∊⍴ValidateRequestFn  ⍝ Request validation function specified?
-          :If ∧/(⊃CodeLocation.⎕AT ValidateRequestFn)∊¨1(1 ¯2)0 ⍝ result-returning monadic or ambivalent?
+          :If ∧/(CodeLocation Attributes ValidateRequestFn)∊¨1(1 ¯2)0 ⍝ result-returning monadic or ambivalent?
               Validate←CodeLocation⍎ValidateRequestFn
           :Else
               →0⊣(rc msg)←8('"',(⍕CodeLocation),'.',ValidateRequestFn,'" is not a monadic result-returning function')
@@ -672,7 +672,7 @@
      
       Authenticate←{0} ⍝ dummy authentication function
       :If ~0∊⍴AuthenticateFn  ⍝ authentication function specified?
-          :If ∧/(⊃CodeLocation.⎕AT AuthenticateFn)∊¨1(1 ¯2)0 ⍝ result-returning monadic or ambivalent?
+          :If ∧/(CodeLocation Attributes AuthenticateFn)∊¨1(1 ¯2)0 ⍝ result-returning monadic or ambivalent?
               Authenticate←CodeLocation⍎AuthenticateFn
           :Else
               →0⊣(rc msg)←8('"',(⍕CodeLocation),'.',AuthenticateFn,'" is not a monadic result-returning function')
@@ -1103,7 +1103,7 @@
      
       →End If('Invalid function "',fn,'"')ns.Req.Fail CheckFunctionName fn
       →End If('Invalid function "',fn,'"')ns.Req.Fail 404×3≠⌊|{0::0 ⋄ CodeLocation.⎕NC⊂⍵}fn  ⍝ is it a function?
-      valence←|⊃CodeLocation.⎕AT fn
+      valence←|CodeLocation Attributes fn
       nc←CodeLocation.⎕NC⊂fn
       →End If('"',fn,'" is not a monadic result-returning function')ns.Req.Fail 400×(1 1 0≢×valence)>(0∧.=valence)∧3.3=nc
      
@@ -1841,6 +1841,15 @@
       r←('Lin' 'Dev'≡system)∧{0::0 ⋄ 1⊣⎕SH'test -t 0'}''
     ∇
 
+    ∇ r←cl Attributes ref
+      :Access Public Shared
+      :If +/0 1=18 2(⊃⍤×-~0⍨)⍨2↑⍎¨'.'(≠⊆⊢)(⎕IO+1)⊃'.'⎕WG'APLVersion' ⍝ Use ⎕ATX or ⎕AT, depending on dyalog version
+          r←cl.(10 11 12 ⎕ATX⊢)ref
+      :Else
+          r←⊃cl.⎕AT ref
+      :EndIf
+    ∇
+
     ∇ r←fmtTS ts
       r←∊'YYYY-MM-DD @ hh.mm.ss.fff'(1200⌶)1 ⎕DT⊂⎕TS
     ∇
@@ -2098,7 +2107,12 @@
       :If 0=⎕NC'path' ⋄ path←''
       :Else ⋄ path,←'.'
       :EndIf
-      r←path∘,¨{(⊂'')~⍨⍵.{⍵/⍨1 1 0≡×|⎕IO⊃⎕AT ⍵}¨⍵.⎕NL ¯3}ref ⍝ limit to result-returning monadic/dyadic/ambivalent functions
+      :If +/0 1=18 2(⊃⍤×-~0⍨)⍨2↑⍎¨'.'(≠⊆⊢)(⎕IO+1)⊃'.'⎕WG'APLVersion' ⍝ Use ⎕ATX or ⎕AT, depending on dyalog version
+          r←path∘,¨{(⊂'')~⍨⍵.{⍵/⍨1 1 0≡×|(10 11 12 ⎕ATX⊢)⍵}¨⍵.⎕NL ¯3}ref
+      :Else
+          r←path∘,¨{(⊂'')~⍨⍵.{⍵/⍨1 1 0≡×|⎕IO⊃⎕AT ⍵}¨⍵.⎕NL ¯3}ref
+      :EndIf
+       ⍝ limit to result-returning monadic/dyadic/ambivalent functions
       :For ns :In ref.⎕NL ¯9.1
           r,←(path,ns)EndPoints ref⍎ns
       :EndFor
